@@ -262,9 +262,10 @@ public class BaseDepthController implements LauncherPrefChangeListener {
     private void applyDepthAndBlur(@Nullable SurfaceTransaction surfaceTransaction,
             boolean applyImmediately, boolean skipSimilarBlur) {
         float depth = mDepth;
-        SystemUiProxy.INSTANCE.get(mLauncher)
-                .setLauncherWallpaperZoom(
-                        Float.isNaN(mWallpaperZoomOverride) ? depth : mWallpaperZoomOverride);
+        // SystemUiProxy.INSTANCE.get(mLauncher)
+        //         .setLauncherWallpaperZoom(
+        //                 Float.isNaN(mWallpaperZoomOverride) ? depth : mWallpaperZoomOverride);
+
 
         if (!BlurUtils.supportsBlursOnWindows()) {
             return;
