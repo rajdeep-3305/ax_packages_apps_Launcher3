@@ -62,7 +62,7 @@ class ScalingWorkspaceRevealAnim(
     siblingAnimation: RectFSpringAnim?,
     windowTargetRect: RectF?,
     playAlphaReveal: Boolean = true,
-    playBlur: Boolean = true,
+    playBlur: Boolean = false,
 ) {
     companion object {
         private const val FADE_DURATION_MS = 200L
@@ -172,18 +172,18 @@ class ScalingWorkspaceRevealAnim(
         transitionConfig.duration = SCALE_DURATION_MS
 
         var depthController: DepthController? = null
-        if (playBlur) {
-            // Match the Wallpaper depth to the rest of the content.
-            depthController = (launcher as? QuickstepLauncher)?.depthController
-            transitionConfig.setInterpolator(StateAnimationConfig.ANIM_DEPTH, SCALE_INTERPOLATOR)
-            depthController?.pauseBlursOnWindows(true) // Blurring is handled by the scrim layer.
-            depthController?.stateDepth?.value = LauncherState.BACKGROUND_APP.getDepth(launcher)
-            depthController?.setStateWithAnimation(
-                LauncherState.NORMAL,
-                transitionConfig,
-                animation,
-            )
+        // Match the Wallpaper depth to the rest of the content.
+        depthController = (launcher as? QuickstepLauncher)?.depthController
+        transitionConfig.setInterpolator(StateAnimationConfig.ANIM_DEPTH, SCALE_INTERPOLATOR)
+        depthController?.pauseBlursOnWindows(true) // Blurring is handled by the scrim layer.
+        depthController?.stateDepth?.value = LauncherState.BACKGROUND_APP.getDepth(launcher)
+        depthController?.setStateWithAnimation(
+            LauncherState.NORMAL,
+            transitionConfig,
+            animation,
+        )
 
+        if (playBlur) {
             // Add a blur animation to the scrim layer.
             var maxBlurRadius =
                 launcher.resources.getDimensionPixelSize(
@@ -199,18 +199,18 @@ class ScalingWorkspaceRevealAnim(
                 applyBlur(maxBlurRadius * blurAnimator.animatedValue as Float)
             }
             animation.add(blurAnimator)
-
-            // Make sure that the contrast scrim animates correctly (alongside the blur) if needed.
-            transitionConfig.setInterpolator(
-                StateAnimationConfig.ANIM_SCRIM_FADE,
-                BLUR_INTERPOLATOR,
-            )
-            launcher.workspace.stateTransitionAnimation.setScrim(
-                animation,
-                LauncherState.NORMAL,
-                transitionConfig,
-            )
         }
+
+        // Make sure that the contrast scrim animates correctly (alongside the blur) if needed.
+        transitionConfig.setInterpolator(
+            StateAnimationConfig.ANIM_SCRIM_FADE,
+            BLUR_INTERPOLATOR,
+        )
+        launcher.workspace.stateTransitionAnimation.setScrim(
+            animation,
+            LauncherState.NORMAL,
+            transitionConfig,
+        )
 
         // To avoid awkward jumps in icon position, we want the sibling animation to always be
         // targeting the current position. Since we can't easily access this, instead we calculate

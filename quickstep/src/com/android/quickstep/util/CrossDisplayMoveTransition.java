@@ -113,7 +113,7 @@ public class CrossDisplayMoveTransition {
         if (playLauncherReveal) {
             launcherRevealAnimators = new ScalingWorkspaceRevealAnim(mLauncher,
                     /* siblingAnimation= */ null, /* windowTargetRect= */ null,
-                    /* playAlphaReveal= */ true, /* playBlur= */ true).getAnimators();
+                    /* playAlphaReveal= */ true, /* playBlur= */ false).getAnimators();
         }
 
         // 3. Start the animation
