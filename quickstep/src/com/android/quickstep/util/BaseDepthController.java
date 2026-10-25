@@ -256,6 +256,10 @@ public class BaseDepthController implements LauncherPrefChangeListener {
 
     private int mLastWorkspaceBlurRadius = -1;
 
+    private float getWallpaperZoom(float zoom) {
+        return LauncherPrefsExt.DISABLE_WALLPAPER_ZOOM.get(mLauncher) ? 0f : zoom;
+    }
+
     /**
      * Applies depth and blur to the launcher.
      *
@@ -266,7 +270,7 @@ public class BaseDepthController implements LauncherPrefChangeListener {
     private void applyDepthAndBlur(@Nullable SurfaceTransaction surfaceTransaction,
             boolean applyImmediately, boolean skipSimilarBlur) {
         float depth = mDepth;
-        float zoom = Float.isNaN(mWallpaperZoomOverride) ? depth : mWallpaperZoomOverride;
+        float zoom = getWallpaperZoom(Float.isNaN(mWallpaperZoomOverride) ? depth : mWallpaperZoomOverride);
         SystemUiProxy.INSTANCE.get(mLauncher)
                 .setLauncherWallpaperZoom(ISystemUiProxy.WP_ZOOM_BASE_DEPTH, zoom);
 

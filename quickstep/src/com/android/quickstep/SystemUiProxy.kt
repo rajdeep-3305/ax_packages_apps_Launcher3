@@ -214,6 +214,36 @@ class SystemUiProxy @Inject constructor(
     // Used to dedupe calls to SystemUI
     private var lastLauncherKeepClearAreaHeight = 0
     private var lastLauncherKeepClearAreaHeightVisible = false
+    private var lastAppZoom = -1f
+    private var lastBaseDepth = -1f
+    private var isWallpaperZoomDisabled =
+        launcherPrefs.get(LauncherPrefsExt.DISABLE_WALLPAPER_ZOOM)
+    private val wallpaperZoomPreferenceListener =
+        LauncherPrefChangeListener {
+            val disabled = launcherPrefs.get(LauncherPrefsExt.DISABLE_WALLPAPER_ZOOM)
+            if (isWallpaperZoomDisabled != disabled) {
+                isWallpaperZoomDisabled = disabled
+                if (disabled) {
+                    lastAppZoom = -1f
+                    lastBaseDepth = -1f
+                    setLauncherWallpaperZoom(ISystemUiProxy.WP_ZOOM_APP_ZOOM, 0f)
+                    setLauncherWallpaperZoom(ISystemUiProxy.WP_ZOOM_BASE_DEPTH, 0f)
+                }
+            }
+        }
+
+    init {
+        launcherPrefs.addListener(
+            wallpaperZoomPreferenceListener,
+            LauncherPrefsExt.DISABLE_WALLPAPER_ZOOM,
+        )
+        lifecycle.addCloseable {
+            launcherPrefs.removeListener(
+                wallpaperZoomPreferenceListener,
+                LauncherPrefsExt.DISABLE_WALLPAPER_ZOOM,
+            )
+        }
+    }
 
     private val asyncHandler =
         Handler(lightweightBackgroundExecutor.looper) { handleMessageAsync(it) }
@@ -324,6 +354,8 @@ class SystemUiProxy @Inject constructor(
         Preconditions.assertUIThread()
         unlinkToDeath()
         systemUiProxy = proxy
+        lastAppZoom = -1f
+        lastBaseDepth = -1f
         this.pip = pip
         this.bubbles = bubbles
         this.splitScreen = splitScreen
@@ -388,7 +420,10 @@ class SystemUiProxy @Inject constructor(
      */
     @MainThread
     fun clearProxy() {
-        setLauncherWallpaperZoom(0f)
+        lastAppZoom = -1f
+        lastBaseDepth = -1f
+        setLauncherWallpaperZoom(ISystemUiProxy.WP_ZOOM_APP_ZOOM, 0f)
+        setLauncherWallpaperZoom(ISystemUiProxy.WP_ZOOM_BASE_DEPTH, 0f)
         setProxy(null, null, null, null, null, null, null, null, null, null, null, null, null)
     }
 
@@ -473,8 +508,17 @@ class SystemUiProxy @Inject constructor(
         }
 
     fun setLauncherWallpaperZoom(owner: Int, zoomOut: Float) {
-        executeWithErrorLog({ "Failed call setLauncherWallpaperZoom with args: owner=$owner, zoom=$zoomOut" }) {
-            systemUiProxy?.setLauncherWallpaperZoom(owner, zoomOut)
+        val proxy = systemUiProxy ?: return
+        val zoom = if (isWallpaperZoomDisabled) 0f else zoomOut
+        if (owner == ISystemUiProxy.WP_ZOOM_APP_ZOOM) {
+            if (lastAppZoom == zoom) return
+            lastAppZoom = zoom
+        } else if (owner == ISystemUiProxy.WP_ZOOM_BASE_DEPTH) {
+            if (lastBaseDepth == zoom) return
+            lastBaseDepth = zoom
+        }
+        executeWithErrorLog({ "Failed call setLauncherWallpaperZoom with args: owner=$owner, zoom=$zoom" }) {
+            proxy.setLauncherWallpaperZoom(owner, zoom)
         }
     }
 

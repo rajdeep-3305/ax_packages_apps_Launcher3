@@ -38,7 +38,9 @@ import com.android.launcher3.anim.PendingAnimation;
 import com.android.launcher3.statemanager.StateManager.StateHandler;
 import com.android.launcher3.states.StateAnimationConfig;
 import com.android.launcher3.uioverrides.QuickstepLauncher;
+import com.android.quickstep.SystemUiProxy;
 import com.android.quickstep.util.BaseDepthController;
+import com.android.systemui.shared.recents.ISystemUiProxy;
 
 import java.io.PrintWriter;
 import java.util.function.Consumer;
@@ -140,6 +142,8 @@ public class DepthController extends BaseDepthController implements StateHandler
             removeOnDrawListener();
             setBaseSurface(null);
             setEarlyWakeup(false);
+            SystemUiProxy.INSTANCE.get(mLauncher)
+                    .setLauncherWallpaperZoom(ISystemUiProxy.WP_ZOOM_BASE_DEPTH, 0f);
         }
     }
 
