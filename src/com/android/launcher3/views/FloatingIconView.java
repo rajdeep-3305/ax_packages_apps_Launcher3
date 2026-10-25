@@ -197,6 +197,11 @@ public class FloatingIconView extends FrameLayout implements
             float foregroundScale, float foregroundAlpha) {
         mAppOpenIconAlpha = foregroundAlpha;
         updateBadgeAlpha();
+        if (mClipIconView.isAdaptiveIcon()) {
+            mBtvDrawable.setAlpha(0f);
+        } else {
+            mBtvDrawable.setAlpha(alpha);
+        }
         updateViewAlpha(alpha, 0);
         mClipIconView.updateAppOpen(rect, progress, cornerRadius, this,
                 mLauncher.getDeviceProfile(), foregroundScale, foregroundAlpha);
@@ -442,21 +447,29 @@ public class FloatingIconView extends FrameLayout implements
             mFinalDrawableBounds.set(0, 0, originalWidth, originalHeight);
 
             float aspectRatio = mLauncher.getDeviceProfile().getDeviceProperties().getAspectRatio();
+            int newWidth = lp.width;
+            int newHeight = lp.height;
             if (dp.getDeviceProperties().isLandscape()) {
-                lp.width = (int) Math.max(lp.width, lp.height * aspectRatio);
+                newWidth = (int) Math.max(lp.width, lp.height * aspectRatio);
             } else {
-                lp.height = (int) Math.max(lp.height, lp.width * aspectRatio);
+                newHeight = (int) Math.max(lp.height, lp.width * aspectRatio);
             }
-            setLayoutParams(lp);
+            if (lp.width != newWidth || lp.height != newHeight) {
+                lp.width = newWidth;
+                lp.height = newHeight;
+                setLayoutParams(lp);
+            }
 
             final LayoutParams clipViewLp = (LayoutParams) mClipIconView.getLayoutParams();
             if (mBadge != null) {
                 Rect badgeBounds = new Rect(0, 0, clipViewLp.width, clipViewLp.height);
                 FastBitmapDrawable.setBadgeBounds(mBadge, badgeBounds);
             }
-            clipViewLp.width = lp.width;
-            clipViewLp.height = lp.height;
-            mClipIconView.setLayoutParams(clipViewLp);
+            if (clipViewLp.width != lp.width || clipViewLp.height != lp.height) {
+                clipViewLp.width = lp.width;
+                clipViewLp.height = lp.height;
+                mClipIconView.setLayoutParams(clipViewLp);
+            }
         }
 
         setOriginalDrawableBackground(btvIcon);
@@ -480,9 +493,7 @@ public class FloatingIconView extends FrameLayout implements
      * Allows nullable as this may be cleared when drawing is deferred to ClipIconView.
      */
     private void setOriginalDrawableBackground(@Nullable Supplier<Drawable> btvIcon) {
-        if (!mIsOpening) {
-            mBtvDrawable.setBackground(btvIcon == null ? null : btvIcon.get());
-        }
+        mBtvDrawable.setBackground(btvIcon == null ? null : btvIcon.get());
     }
 
     /**
@@ -512,6 +523,10 @@ public class FloatingIconView extends FrameLayout implements
                 setVisibility(VISIBLE);
                 updateViewsVisibility(false  /* isVisible */);
             } else {
+                if (mBtvDrawable.getBackground() != null) {
+                    setVisibility(VISIBLE);
+                    updateViewsVisibility(false  /* isVisible */);
+                }
                 mIconLoadResult.onIconLoaded = () -> {
                     if (cancellationSignal.isCanceled()) {
                         return;
@@ -585,14 +600,11 @@ public class FloatingIconView extends FrameLayout implements
     @Override
     public void onAnimationStart(Animator animator) {
         if ((mIconLoadResult != null && mIconLoadResult.isIconLoaded)
-                || (!mIsOpening && mBtvDrawable.getBackground() != null)) {
+                || mBtvDrawable.getBackground() != null) {
             // No need to wait for icon load since we can display the BubbleTextView drawable.
             setVisibility(View.VISIBLE);
         }
-        if (!mIsOpening) {
-            // When closing an app, we want the item on the workspace to be invisible immediately
-            updateViewsVisibility(false  /* isVisible */);
-        }
+        updateViewsVisibility(false  /* isVisible */);
         if (mFadeOutView != null) {
             mFadeOutView.postForceHideDotRingAsFloatingIconViewCompanion(true);
         }

@@ -4248,15 +4248,36 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     }
 
     /**
+     * Prepares the workspace pivot for scaling animations by centering it on the
+     * currently visible page, preventing lateral drift when scaling on non-default pages.
+     */
+    public void prepareScalePivot() {
+        int width = getWidth() > 0 ? getWidth() : getExpectedWidth();
+        int height = getHeight() > 0 ? getHeight() : getExpectedHeight();
+        setPivotX(getScrollX() + width / 2.0f);
+        setPivotY(height / 2.0f);
+    }
+
+    /**
+     * Resets the workspace scale pivot back to the default center.
+     */
+    public void resetScalePivot() {
+        resetPivot();
+    }
+
+    /**
      * Set the given view's pivot point to match the workspace's, so that it scales together. Since
      * both this view and workspace can move, transform the point manually instead of using
      * dragLayer.getDescendantCoordRelativeToSelf and related methods.
      */
     public void setPivotToScaleWithSelf(View sibling) {
-        sibling.setPivotY(getPivotY() + getTop()
-                - sibling.getTop() - sibling.getTranslationY());
-        sibling.setPivotX(getPivotX() + getLeft()
-                - sibling.getLeft() - sibling.getTranslationX());
+        prepareScalePivot();
+        if (sibling != null) {
+            sibling.setPivotY(getPivotY() + getTop()
+                    - sibling.getTop() - sibling.getTranslationY());
+            sibling.setPivotX(getPivotX() - getScrollX() + getLeft()
+                    - sibling.getLeft() - sibling.getTranslationX());
+        }
     }
 
     @Override

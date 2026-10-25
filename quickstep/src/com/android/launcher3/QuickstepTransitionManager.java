@@ -561,6 +561,11 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
                 public void onAnimationEnd(Animator animation) {
                     launcherContentAnimator.second.run();
                 }
+
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    launcherContentAnimator.second.run();
+                }
             });
         }
     }
@@ -680,7 +685,9 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
             endListener = composeViewContentAnimator(launcherAnimator, alphas, scales);
         } else {
             List<View> viewsToAnimate = new ArrayList<>();
-            viewsToAnimate.add(mLauncher.getWorkspace());
+            Workspace<?> workspace = mLauncher.getWorkspace();
+            viewsToAnimate.add(workspace);
+            workspace.prepareScalePivot();
 
             Hotseat hotseat = mLauncher.getHotseat();
             // Do not scale hotseat as a whole when taskbar is present, and scale QSB only if it's
@@ -717,7 +724,9 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
             endListener = () -> {
                 viewsToAnimate.forEach(view -> {
                     SCALE_PROPERTY.set(view, 1f);
-
+                    if (view instanceof Workspace<?> ws) {
+                        ws.resetScalePivot();
+                    }
                     // Reset the cached animation.
                     Animations.Companion.setOngoingAnimation(view, null /* animation */);
                 });

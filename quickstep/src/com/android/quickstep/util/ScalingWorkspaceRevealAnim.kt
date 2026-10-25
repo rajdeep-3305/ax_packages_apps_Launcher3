@@ -286,6 +286,7 @@ class ScalingWorkspaceRevealAnim(
                     // Reset the cached animations.
                     Animations.setOngoingAnimation(workspace, animation = null)
                     Animations.setOngoingAnimation(hotseat, animation = null)
+                    workspace.resetScalePivot()
                     removeBlurLayer()
                     depthController?.pauseBlursOnWindows(false)
                 }
