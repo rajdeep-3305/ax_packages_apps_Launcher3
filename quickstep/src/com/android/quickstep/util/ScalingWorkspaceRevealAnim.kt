@@ -248,9 +248,6 @@ class ScalingWorkspaceRevealAnim(
             }
         }
 
-        // Needed to avoid text artefacts during the scale animation.
-        workspace.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-        hotseat.setLayerType(View.LAYER_TYPE_HARDWARE, null)
         animation.addListener(
             object : AnimatorListenerAdapter() {
                 override fun onAnimationCancel(animation: Animator) {
@@ -285,9 +282,6 @@ class ScalingWorkspaceRevealAnim(
                             Exception(),
                         )
                     }
-
-                    workspace.setLayerType(View.LAYER_TYPE_NONE, null)
-                    hotseat.setLayerType(View.LAYER_TYPE_NONE, null)
 
                     // Reset the cached animations.
                     Animations.setOngoingAnimation(workspace, animation = null)

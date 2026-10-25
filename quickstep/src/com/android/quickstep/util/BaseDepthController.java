@@ -33,8 +33,6 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-
-import com.android.app.animation.Interpolators;
 import com.android.axion.blur.AxBlurConfig;
 import com.android.launcher3.Flags;
 import com.android.launcher3.Launcher;
@@ -42,6 +40,7 @@ import com.android.launcher3.LauncherPrefChangeListener;
 import com.android.launcher3.LauncherPrefs;
 import com.android.launcher3.LauncherPrefsExt;
 import com.android.launcher3.LauncherState;
+import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.statemanager.StateManager;
 import com.android.launcher3.uioverrides.QuickstepLauncher;
@@ -255,6 +254,8 @@ public class BaseDepthController implements LauncherPrefChangeListener {
         applyDepthAndBlur(null, /* applyImmediately */ false, /* skipSimilarBlur */ true);
     }
 
+    private int mLastWorkspaceBlurRadius = -1;
+
     /**
      * Applies depth and blur to the launcher.
      *
@@ -388,8 +389,18 @@ public class BaseDepthController implements LauncherPrefChangeListener {
         boolean shouldBlurWorkspace =
                 stateManager.getCurrentStableState().shouldBlurWorkspace(targetState);
 
-        RenderEffect blurEffect = shouldBlurWorkspace && mCurrentBlur > 0
-                ? RenderEffect.createBlurEffect(mCurrentBlur, mCurrentBlur, Shader.TileMode.DECAL)
+        int maxWorkspaceBlur = mLauncher.getResources().getDimensionPixelSize(
+                R.dimen.max_depth_blur_radius_enhanced);
+        int targetBlur = (shouldBlurWorkspace && mCurrentBlur > 0)
+                ? Math.min(mCurrentBlur, maxWorkspaceBlur) : 0;
+
+        if (mLastWorkspaceBlurRadius == targetBlur) {
+            return shouldBlurWorkspace;
+        }
+        mLastWorkspaceBlurRadius = targetBlur;
+
+        RenderEffect blurEffect = targetBlur > 0
+                ? RenderEffect.createBlurEffect(targetBlur, targetBlur, Shader.TileMode.DECAL)
                 // If blur is not desired, clear the blur effect from the depth targets.
                 : null;
         if (DEBUG) {
@@ -397,6 +408,7 @@ public class BaseDepthController implements LauncherPrefChangeListener {
                     + " targetState: " + targetState
                     + " currentStableState: " + stateManager.getCurrentStableState()
                     + " mCurrentBlur: " + mCurrentBlur
+                    + " targetBlur: " + targetBlur
                     + " mLauncher.getDepthBlurTargets(): " + mLauncher.getDepthBlurTargets());
         }
         mLauncher.getDepthBlurTargets().forEach(target -> target.setRenderEffect(blurEffect));
@@ -489,9 +501,8 @@ public class BaseDepthController implements LauncherPrefChangeListener {
 
     /**
      * Maps depth values to blur amounts as a percentage of the max blur.
-     * The blur percentage grows linearly with depth, and maxes out at 30% depth.
      */
     private static float mapDepthToBlur(float depth) {
-        return Interpolators.clampToProgress(depth, 0, 0.3f);
+        return depth;
     }
 }

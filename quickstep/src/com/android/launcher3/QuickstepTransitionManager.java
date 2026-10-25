@@ -694,8 +694,6 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
             }
 
             viewsToAnimate.forEach(view -> {
-                view.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-
                 // Start the animation from the current value, instead of assuming the views are
                 // in their resting state, so interrupted animations merge seamlessly.
                 // TODO(b/367591368): ideally these animations would be refactored to be
@@ -719,7 +717,6 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
             endListener = () -> {
                 viewsToAnimate.forEach(view -> {
                     SCALE_PROPERTY.set(view, 1f);
-                    view.setLayerType(View.LAYER_TYPE_NONE, null);
 
                     // Reset the cached animation.
                     Animations.Companion.setOngoingAnimation(view, null /* animation */);
